@@ -8,7 +8,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "*", // Allow connections from any origin on the network
     methods: ["GET", "POST"]
   }
 });
@@ -35,6 +35,16 @@ io.on('connection', (socket) => {
   socket.on('joinAsSpectator', ({ name }) => {
     gameEngine.addSpectator(playerId, name);
     io.emit('gameState', gameEngine.getGameState());
+  });
+
+  socket.on('voteToStart', () => {
+    const result = gameEngine.voteToStart(playerId);
+    if (result.success) {
+      console.log(`Player voted to start: ${result.message || 'Game started!'}`);
+      io.emit('gameState', gameEngine.getGameState());
+    } else {
+      console.log(`Vote to start failed: ${result.error}`);
+    }
   });
 
   socket.on('playCard', ({ cardIndex }) => {
@@ -145,7 +155,7 @@ process.stdin.on('data', (data) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Truco game server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Truco game server running at http://0.0.0.0:${PORT}`);
   console.log('Type "help" for available commands');
 });

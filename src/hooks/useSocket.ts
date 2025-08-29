@@ -69,6 +69,10 @@ export function useSocket() {
     socket?.emit('fold');
   };
 
+  const voteToStart = () => {
+    socket?.emit('voteToStart');
+  };
+
   return {
     gameState,
     messages,
@@ -82,5 +86,6 @@ export function useSocket() {
     sendMessage,
     revealEnvido,
     fold,
+    voteToStart,
   };
 }

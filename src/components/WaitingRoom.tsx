@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GameState } from '../types/game';
+import { GameState, ChatMessage } from '../types/game';
 
 interface WaitingRoomProps {
   gameState: GameState;
@@ -7,14 +7,21 @@ interface WaitingRoomProps {
   onJoinAsSpectator: (name: string) => void;
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
+  onVoteToStart: () => void;
+  playerId: string | null;
 }
 
-export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, messages, onSendMessage }: WaitingRoomProps) {
+export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, messages, onSendMessage, onVoteToStart, playerId }: WaitingRoomProps) {
   const [name, setName] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
   
   // Import Chat component
   const Chat = React.lazy(() => import('./Chat').then(module => ({ default: module.Chat })));
+
+  const currentPlayer = gameState.players.find(p => p.id === playerId);
+  const hasVoted = gameState.startVotes?.includes(playerId || '') || false;
+  const totalVotes = gameState.startVotes?.length || 0;
+  const requiredVotes = gameState.players.length;
 
   const handleJoinAsPlayer = () => {
     if (name.trim()) {
@@ -75,7 +82,44 @@ export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, mess
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-3 game-area p-8 text-center space-y-6">
             <h2 className="text-2xl font-semibold">Waiting for Game to Start...</h2>
-            <p className="text-gray-600">Host will start the game when ready</p>
+            
+            {/* Start Game Section */}
+            {currentPlayer && gameState.players.length >= 2 && (
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold mb-4">Ready to Start?</h3>
+                <p className="text-gray-600 mb-4">
+                  All players must vote to start the game ({totalVotes}/{requiredVotes} votes)
+                </p>
+                
+                <button 
+                  className={`btn text-lg px-8 py-3 ${hasVoted ? 'btn-success' : 'btn-primary'}`}
+                  onClick={onVoteToStart}
+                  disabled={hasVoted}
+                >
+                  {hasVoted ? '✓ Voted to Start' : 'Vote to Start Game'}
+                </button>
+                
+                {totalVotes > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-600 mb-2">Players who voted:</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {gameState.players.map((player) => (
+                        <span 
+                          key={player.id}
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            gameState.startVotes?.includes(player.id) 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {player.name} {gameState.startVotes?.includes(player.id) ? '✓' : '○'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

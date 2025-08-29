@@ -17,6 +17,7 @@ function App() {
     sendMessage,
     revealEnvido,
     fold,
+    voteToStart,
   } = useSocket();
 
   if (!gameState) {
@@ -37,6 +38,8 @@ function App() {
         onJoinAsSpectator={joinAsSpectator}
         messages={messages}
         onSendMessage={sendMessage}
+        onVoteToStart={voteToStart}
+        playerId={playerId}
       />
     );
   }

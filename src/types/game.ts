@@ -33,6 +33,7 @@ export interface GameState {
   gameEnded: boolean;
   winner: number | null;
   canFold: boolean;
+  startVotes: string[]; // Array of player IDs who voted to start
 }
 
 export interface ChatMessage {

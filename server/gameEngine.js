@@ -24,6 +24,7 @@ export class GameEngine {
       gameEnded: false,
       winner: null,
       canFold: false,
+      startVotes: [], // Track players who voted to start
     };
   }
 
@@ -52,6 +53,42 @@ export class GameEngine {
     const spectator = { id: playerId, name };
     this.gameState.spectators.push(spectator);
     return { success: true };
+  }
+
+  voteToStart(playerId) {
+    // Check if player is in the game
+    const player = this.getPlayerById(playerId);
+    if (!player) {
+      return { success: false, error: 'Player not found' };
+    }
+
+    // Check if game already started
+    if (this.gameState.gameStarted) {
+      return { success: false, error: 'Game already started' };
+    }
+
+    // Check minimum players
+    if (this.gameState.players.length < 2) {
+      return { success: false, error: 'Need at least 2 players to start' };
+    }
+
+    // Check if player already voted
+    if (this.gameState.startVotes.includes(playerId)) {
+      return { success: false, error: 'Already voted' };
+    }
+
+    // Add vote
+    this.gameState.startVotes.push(playerId);
+
+    // Check if all players voted
+    if (this.gameState.startVotes.length === this.gameState.players.length) {
+      // Start the game automatically
+      const result = this.forceStartGame();
+      this.gameState.startVotes = []; // Clear votes after starting
+      return result;
+    }
+
+    return { success: true, message: `Voted to start (${this.gameState.startVotes.length}/${this.gameState.players.length})` };
   }
 
   removePlayer(playerId) {
@@ -500,6 +537,7 @@ export class GameEngine {
       gameEnded: false,
       winner: null,
       canFold: false,
+      startVotes: [],
     };
   }
 }
