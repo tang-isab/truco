@@ -6,12 +6,16 @@ import { GameEngine } from './gameEngine.js';
 
 const app = express();
 const server = createServer(app);
+
+// Serve static files from the cards directory
+app.use('/cards', express.static('cards'));
+
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow connections from any origin on the network
+    origin: true,     // or ["http://172.16.32.174:3000"] for stricter
     methods: ["GET", "POST"]
   }
-});
+})
 
 const gameEngine = new GameEngine();
 const connectedClients = new Map();

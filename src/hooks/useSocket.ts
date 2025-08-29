@@ -9,7 +9,12 @@ export function useSocket() {
   const [playerId, setPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:3001');
+    // Dynamically determine server URL based on current host
+    const serverUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3001' 
+      : `http://${window.location.hostname}:3001`;
+    
+    const newSocket = io();  // no args → same-origin
     setSocket(newSocket);
 
     newSocket.on('connect', () => {

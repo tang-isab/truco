@@ -1,6 +1,4 @@
 import React from 'react';
-import { CARD_ORDER } from '../utils/cardUtils';
-import { Card } from './Card';
 
 interface CardOrderModalProps {
   onClose: () => void;
@@ -14,17 +12,18 @@ export function CardOrderModal({ onClose }: CardOrderModalProps) {
           <h2 className="text-2xl font-bold">Card Order (Highest to Lowest)</h2>
           <button className="btn btn-secondary" onClick={onClose}>×</button>
         </div>
-        <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-96 overflow-y-auto">
-          {CARD_ORDER.map((card, index) => (
-            <div key={index} className="text-center">
-              <Card card={card} />
-              <p className="text-xs mt-1 font-semibold">#{index + 1}</p>
-            </div>
-          ))}
+        
+        <div className="max-h-96 overflow-y-auto flex justify-center">
+          <img 
+            src="/cards/card_order.jpg" 
+            alt="Card Order from Highest to Lowest" 
+            className="max-w-full max-h-full object-contain rounded-lg"
+          />
         </div>
-        <div className="mt-4 text-sm text-gray-600">
+        
+        <div className="mt-4 text-sm text-gray-600 text-center">
           <p className="font-semibold">Remember:</p>
-          <p>Lower number = Higher strength</p>
+          <p>Cards shown from strongest (top) to weakest (bottom)</p>
           <p>1 of Sword is the strongest card</p>
         </div>
       </div>

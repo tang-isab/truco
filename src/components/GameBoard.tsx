@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState, Player } from '../types/game';
+import { GameState, Player, ChatMessage } from '../types/game';
 import { Card } from './Card';
 import { GameControls } from './GameControls';
 import { Chat } from './Chat';
@@ -15,6 +15,7 @@ interface GameBoardProps {
   onSendMessage: (message: string) => void;
   onRevealEnvido: (value: number) => void;
   onFold: () => void;
+  messages: ChatMessage[];
 }
 
 export function GameBoard({ 
@@ -26,7 +27,8 @@ export function GameBoard({
   onDenyBet,
   onSendMessage,
   onRevealEnvido,
-  onFold
+  onFold,
+  messages
 }: GameBoardProps) {
   const isCurrentPlayerTurn = currentPlayer && gameState.currentPlayer === gameState.players.findIndex(p => p.id === currentPlayer.id);
   const currentPlayerIndex = currentPlayer ? gameState.players.findIndex(p => p.id === currentPlayer.id) : -1;
@@ -37,7 +39,7 @@ export function GameBoard({
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-4xl font-bold text-white mb-2">Truco</h1>
-          <div className="text-xl text-white/90 mb-4">
+          <div className="text-xl text-white mb-4">
             Phase: <span className="font-semibold capitalize">{gameState.phase}</span>
             {gameState.currentRound > 0 && (
               <span className="ml-4">Round: {gameState.currentRound}</span>
@@ -71,7 +73,7 @@ export function GameBoard({
               {/* Center Cards */}
               <div className="text-center mb-8">
                 <h3 className="text-lg font-semibold mb-4">Cards Played</h3>
-                <div className="flex justify-center gap-4">
+                <div className="flex justify-center gap-6 items-center">
                   {gameState.currentTrick.map((card, index) => (
                     <Card key={index} card={card} />
                   ))}
@@ -89,7 +91,7 @@ export function GameBoard({
                       <h4 className="font-semibold mb-2">
                         {player.name} {index === gameState.dealer && '(Dealer)'} {index === gameState.mono && '(Mono)'}
                       </h4>
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-center gap-3 items-center">
                         {player.id === currentPlayer?.id ? (
                           player.cards.map((card, cardIndex) => (
                             <Card 
@@ -137,7 +139,7 @@ export function GameBoard({
 
           {/* Chat */}
           <div className="lg:col-span-1">
-            <Chat onSendMessage={onSendMessage} />
+            <Chat messages={messages} onSendMessage={onSendMessage} />
           </div>
         </div>
       </div>

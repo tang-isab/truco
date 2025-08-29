@@ -31,14 +31,26 @@ export function GameControls({ gameState, currentPlayer, onBet, onAcceptBet, onD
   const getAvailableBets = () => {
     const bets = [];
     
-    if (canCallEnvido) {
-      if (!gameState.currentBet.type) {
+    // Check if there's a pending bet - if so, only the waiting player can bet
+    if (gameState.currentBet.type && gameState.currentBet.waitingFor !== -1) {
+      if (gameState.currentBet.waitingFor !== currentPlayerIndex) {
+        return []; // Not your turn to respond
+      }
+      // Player can respond - handled in getResponseBets
+      return [];
+    }
+    
+    // No pending bet - check available initial bets
+    if (canCallEnvido && !gameState.currentBet.type) {
+      // Envido bets - only if not already used
+      if (!gameState.betsUsedThisRound?.includes('envido')) {
         bets.push('envido');
       }
     }
     
-    if (gameState.phase === 'truco' && isCurrentPlayerTurn) {
-      if (!gameState.currentBet.type || gameState.currentBet.type === 'envido') {
+    // Truco bets - only on current player's turn
+    if (gameState.phase === 'truco' && isCurrentPlayerTurn && !gameState.currentBet.type) {
+      if (!gameState.betsUsedThisRound?.includes('truco')) {
         bets.push('truco');
       }
     }
@@ -51,20 +63,29 @@ export function GameControls({ gameState, currentPlayer, onBet, onAcceptBet, onD
     
     const bets = [];
     if (gameState.currentBet.type === 'envido') {
-      bets.push('envido2', 'real-envido');
+      // Second envido - only if first envido was called and second not used
+      if (gameState.betsUsedThisRound?.includes('envido') && !gameState.betsUsedThisRound?.includes('envido2')) {
+        bets.push('envido2');
+      }
+      // Real envido - only if not already used
+      if (!gameState.betsUsedThisRound?.includes('real-envido')) {
+        bets.push('real-envido');
+      }
       
-      // Calculate if falta-envido is available
-      const opposingTeam = currentPlayer?.team === 0 ? 1 : 0;
-      const opposingScore = gameState.teamScores[opposingTeam];
-      const faltaPoints = opposingScore < 15 ? 15 - opposingScore : 30 - opposingScore;
-      
-      if (gameState.currentBet.amount < faltaPoints) {
-        bets.push('falta-envido');
+      // Calculate if falta-envido is available and not used
+      if (!gameState.betsUsedThisRound?.includes('falta-envido')) {
+        const opposingTeam = currentPlayer?.team === 0 ? 1 : 0;
+        const opposingScore = gameState.teamScores[opposingTeam];
+        const faltaPoints = opposingScore < 15 ? 15 - opposingScore : 30 - opposingScore;
+        
+        if (gameState.currentBet.amount < faltaPoints) {
+          bets.push('falta-envido');
+        }
       }
     } else if (gameState.currentBet.type === 'truco') {
-      if (gameState.currentBet.amount === 2) {
+      if (gameState.currentBet.amount === 2 && !gameState.betsUsedThisRound?.includes('retruco')) {
         bets.push('retruco');
-      } else if (gameState.currentBet.amount === 3) {
+      } else if (gameState.currentBet.amount === 3 && !gameState.betsUsedThisRound?.includes('vale-cuatro')) {
         bets.push('vale-cuatro');
       }
     }

@@ -55,6 +55,7 @@ function App() {
       onSendMessage={sendMessage}
       onRevealEnvido={revealEnvido}
       onFold={fold}
+      messages={messages}
     />
   );
 }

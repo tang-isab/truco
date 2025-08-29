@@ -25,6 +25,7 @@ export class GameEngine {
       winner: null,
       canFold: false,
       startVotes: [], // Track players who voted to start
+      betsUsedThisRound: [], // Track which bets have been used
     };
   }
 
@@ -274,6 +275,7 @@ export class GameEngine {
     this.gameState.currentBet = { type: null, amount: 0, caller: -1, waitingFor: -1 };
     this.gameState.phase = 'truco';
     this.gameState.envidoValues = [];
+    this.gameState.betsUsedThisRound = []; // Clear used bets for new round
     this.gameState.currentRound++;
     
     // Move dealer
@@ -290,12 +292,49 @@ export class GameEngine {
       return { success: false, error: 'Player not found' };
     }
 
+    // Check if there's already a pending bet response
+    if (this.gameState.currentBet.type && this.gameState.currentBet.waitingFor !== -1) {
+      // Only the player being waited for can respond or counter-bet
+      if (this.gameState.currentBet.waitingFor !== playerIndex) {
+        return { success: false, error: 'Not your turn to bet' };
+      }
+    } else {
+      // No pending bet - check if it's player's turn for initial bets
+      const isEnvidoBet = betType.includes('envido');
+      if (!isEnvidoBet && this.gameState.currentPlayer !== playerIndex) {
+        return { success: false, error: 'Not your turn to bet' };
+      }
+    }
+
+    // Check if this specific bet has already been used this round
+    if (this.gameState.betsUsedThisRound.includes(betType)) {
+      return { success: false, error: `${betType} has already been called this round` };
+    }
+
     // Check if envido is still available
     if (betType.includes('envido') && 
         (this.gameState.currentBet.type === 'truco' || 
          this.gameState.currentTrick.length > 0 || 
          this.gameState.currentRound > 1)) {
       return { success: false, error: 'Envido no longer available' };
+    }
+
+    // Validate bet progression for envido
+    if (betType.includes('envido')) {
+      if (betType === 'envido2' && !this.gameState.betsUsedThisRound.includes('envido')) {
+        return { success: false, error: 'Must call envido before second envido' };
+      }
+      if (betType === 'real-envido' && !this.gameState.betsUsedThisRound.some(b => b.includes('envido'))) {
+        return { success: false, error: 'Must call envido first' };
+      }
+    }
+
+    // Validate bet progression for truco
+    if (betType === 'retruco' && !this.gameState.betsUsedThisRound.includes('truco')) {
+      return { success: false, error: 'Must call truco before retruco' };
+    }
+    if (betType === 'vale-cuatro' && !this.gameState.betsUsedThisRound.includes('retruco')) {
+      return { success: false, error: 'Must call retruco before vale cuatro' };
     }
 
     const betAmounts = {
@@ -314,6 +353,9 @@ export class GameEngine {
     if (isEnvidoBet) {
       this.gameState.phase = 'envido';
     }
+
+    // Add this bet to the used bets list
+    this.gameState.betsUsedThisRound.push(betType);
 
     // Find opposing team player to wait for
     const opposingTeamPlayers = this.gameState.players
@@ -538,6 +580,7 @@ export class GameEngine {
       winner: null,
       canFold: false,
       startVotes: [],
+      betsUsedThisRound: [],
     };
   }
 }

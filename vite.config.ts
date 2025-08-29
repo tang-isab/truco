@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '0.0.0.0', // Expose to network
+    host: true,           // <-- expose to LAN
     port: 3000,
     proxy: {
       '/socket.io': {
@@ -13,4 +13,4 @@ export default defineConfig({
       },
     },
   },
-})
+});

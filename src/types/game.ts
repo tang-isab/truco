@@ -34,6 +34,7 @@ export interface GameState {
   winner: number | null;
   canFold: boolean;
   startVotes: string[]; // Array of player IDs who voted to start
+  betsUsedThisRound: string[]; // Track which bets have been used this round
 }
 
 export interface ChatMessage {
