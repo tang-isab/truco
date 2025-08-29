@@ -61,8 +61,12 @@ export function useSocket() {
     socket?.emit('chatMessage', { message });
   };
 
-  const startGame = () => {
-    socket?.emit('startGame');
+  const revealEnvido = (value: number) => {
+    socket?.emit('revealEnvido', { value });
+  };
+
+  const fold = () => {
+    socket?.emit('fold');
   };
 
   return {
@@ -76,6 +80,7 @@ export function useSocket() {
     acceptBet,
     denyBet,
     sendMessage,
-    startGame,
+    revealEnvido,
+    fold,
   };
 }

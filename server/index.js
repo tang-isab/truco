@@ -65,6 +65,20 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('revealEnvido', ({ value }) => {
+    const result = gameEngine.revealEnvido(playerId, value);
+    if (result.success) {
+      io.emit('gameState', gameEngine.getGameState());
+    }
+  });
+
+  socket.on('fold', () => {
+    const result = gameEngine.fold(playerId);
+    if (result.success) {
+      io.emit('gameState', gameEngine.getGameState());
+    }
+  });
+
   socket.on('chatMessage', ({ message }) => {
     const player = gameEngine.getPlayerById(playerId) || gameEngine.getSpectatorById(playerId);
     if (player) {
@@ -79,23 +93,24 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('startGame', () => {
-    // Only allow host or unanimous agreement to start
-    const result = gameEngine.startGame(playerId);
-    if (result.success) {
-      io.emit('gameState', gameEngine.getGameState());
-    }
-  });
-
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     gameEngine.removePlayer(playerId);
-    connectedClients.delete(socket.id);
     io.emit('gameState', gameEngine.getGameState());
+    connectedClients.delete(socket.id);
   });
 });
 
 // Host command to start game
+console.log('Truco Game Server');
+console.log('================');
+console.log('Available commands:');
+console.log('  start - Start the game (requires 2 or 4 players)');
+console.log('  reset - Reset the game completely');
+console.log('  status - Show current game status');
+console.log('  help - Show this help message');
+console.log('');
+
 process.stdin.on('data', (data) => {
   const command = data.toString().trim();
   if (command === 'start') {
@@ -110,11 +125,22 @@ process.stdin.on('data', (data) => {
     gameEngine.resetGame();
     console.log('Game reset');
     io.emit('gameState', gameEngine.getGameState());
+  } else if (command === 'status') {
+    const state = gameEngine.getGameState();
+    console.log('Game Status:');
+    console.log(`  Players: ${state.players.length}/4`);
+    console.log(`  Spectators: ${state.spectators.length}`);
+    console.log(`  Game Started: ${state.gameStarted}`);
+    console.log(`  Phase: ${state.phase}`);
+    console.log(`  Scores: Team 1: ${state.teamScores[0]}, Team 2: ${state.teamScores[1]}`);
   } else if (command === 'help') {
     console.log('Available commands:');
-    console.log('  start - Force start the game');
-    console.log('  reset - Reset the game');
-    console.log('  help  - Show this help');
+    console.log('  start  - Start the game (requires 2 or 4 players)');
+    console.log('  reset  - Reset the game completely');
+    console.log('  status - Show current game status');
+    console.log('  help   - Show this help message');
+  } else if (command.trim() !== '') {
+    console.log('Unknown command. Type "help" for available commands.');
   }
 });
 

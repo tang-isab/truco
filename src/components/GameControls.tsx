@@ -9,16 +9,24 @@ interface GameControlsProps {
   onBet: (betType: string) => void;
   onAcceptBet: () => void;
   onDenyBet: () => void;
+  onFold: () => void;
 }
 
-export function GameControls({ gameState, currentPlayer, onBet, onAcceptBet, onDenyBet }: GameControlsProps) {
+export function GameControls({ gameState, currentPlayer, onBet, onAcceptBet, onDenyBet, onFold }: GameControlsProps) {
   const [showCardOrder, setShowCardOrder] = useState(false);
   const [showRules, setShowRules] = useState(false);
 
-  const canCallEnvido = gameState.phase === 'truco' && gameState.currentBet.type !== 'truco';
+  const canCallEnvido = gameState.phase === 'truco' && 
+    gameState.currentBet.type !== 'truco' && 
+    gameState.currentTrick.length === 0 && 
+    gameState.currentRound === 1;
+    
   const isWaitingForBetResponse = gameState.currentBet.type && 
     currentPlayer && 
     gameState.currentBet.waitingFor === gameState.players.findIndex(p => p.id === currentPlayer.id);
+    
+  const currentPlayerIndex = currentPlayer ? gameState.players.findIndex(p => p.id === currentPlayer.id) : -1;
+  const isCurrentPlayerTurn = currentPlayerIndex === gameState.currentPlayer;
 
   const getAvailableBets = () => {
     const bets = [];
@@ -26,17 +34,37 @@ export function GameControls({ gameState, currentPlayer, onBet, onAcceptBet, onD
     if (canCallEnvido) {
       if (!gameState.currentBet.type) {
         bets.push('envido');
-      } else if (gameState.currentBet.type === 'envido') {
-        bets.push('envido2', 'real-envido', 'falta-envido');
       }
     }
     
-    if (gameState.phase === 'truco') {
+    if (gameState.phase === 'truco' && isCurrentPlayerTurn) {
       if (!gameState.currentBet.type || gameState.currentBet.type === 'envido') {
         bets.push('truco');
-      } else if (gameState.currentBet.type === 'truco') {
+      }
+    }
+    
+    return bets;
+  };
+
+  const getResponseBets = () => {
+    if (!gameState.currentBet.type) return [];
+    
+    const bets = [];
+    if (gameState.currentBet.type === 'envido') {
+      bets.push('envido2', 'real-envido');
+      
+      // Calculate if falta-envido is available
+      const opposingTeam = currentPlayer?.team === 0 ? 1 : 0;
+      const opposingScore = gameState.teamScores[opposingTeam];
+      const faltaPoints = opposingScore < 15 ? 15 - opposingScore : 30 - opposingScore;
+      
+      if (gameState.currentBet.amount < faltaPoints) {
+        bets.push('falta-envido');
+      }
+    } else if (gameState.currentBet.type === 'truco') {
+      if (gameState.currentBet.amount === 2) {
         bets.push('retruco');
-      } else if (gameState.currentBet.type === 'retruco') {
+      } else if (gameState.currentBet.amount === 3) {
         bets.push('vale-cuatro');
       }
     }
@@ -50,7 +78,7 @@ export function GameControls({ gameState, currentPlayer, onBet, onAcceptBet, onD
       {isWaitingForBetResponse && (
         <div className="text-center p-4 bg-yellow-100 rounded-lg">
           <p className="mb-4 font-semibold">
-            Respond to {gameState.currentBet.type} bet ({gameState.currentBet.amount} points)
+            Respond to {gameState.currentBet.type?.toUpperCase()} bet ({gameState.currentBet.amount} points)
           </p>
           <div className="flex justify-center gap-4">
             <button className="btn btn-success" onClick={onAcceptBet}>
@@ -59,9 +87,9 @@ export function GameControls({ gameState, currentPlayer, onBet, onAcceptBet, onD
             <button className="btn btn-danger" onClick={onDenyBet}>
               No Quiero (Deny)
             </button>
-            {getAvailableBets().map(bet => (
+            {getResponseBets().map(bet => (
               <button key={bet} className="btn btn-primary" onClick={() => onBet(bet)}>
-                {bet.replace('-', ' ').toUpperCase()}
+                {bet === 'envido2' ? 'ENVIDO' : bet.replace('-', ' ').toUpperCase()}
               </button>
             ))}
           </div>
@@ -75,10 +103,19 @@ export function GameControls({ gameState, currentPlayer, onBet, onAcceptBet, onD
           <div className="flex justify-center gap-2 flex-wrap">
             {getAvailableBets().map(bet => (
               <button key={bet} className="btn btn-primary" onClick={() => onBet(bet)}>
-                {bet.replace('-', ' ').toUpperCase()}
+                {bet.toUpperCase()}
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Fold Button */}
+      {gameState.canFold && currentPlayer && (
+        <div className="text-center">
+          <button className="btn btn-danger" onClick={onFold}>
+            Fold Team
+          </button>
         </div>
       )}
 

@@ -15,7 +15,8 @@ function App() {
     acceptBet,
     denyBet,
     sendMessage,
-    startGame,
+    revealEnvido,
+    fold,
   } = useSocket();
 
   if (!gameState) {
@@ -27,8 +28,6 @@ function App() {
   }
 
   const currentPlayer = gameState.players.find(p => p.id === playerId) || null;
-  const isHost = playerId === 'host'; // This would be determined by the server
-  const canStartGame = isHost || gameState.players.every(p => p.isConnected);
 
   if (!gameState.gameStarted) {
     return (
@@ -36,8 +35,8 @@ function App() {
         gameState={gameState}
         onJoinAsPlayer={joinAsPlayer}
         onJoinAsSpectator={joinAsSpectator}
-        canStartGame={canStartGame}
-        onStartGame={startGame}
+        messages={messages}
+        onSendMessage={sendMessage}
       />
     );
   }
@@ -51,6 +50,8 @@ function App() {
       onAcceptBet={acceptBet}
       onDenyBet={denyBet}
       onSendMessage={sendMessage}
+      onRevealEnvido={revealEnvido}
+      onFold={fold}
     />
   );
 }

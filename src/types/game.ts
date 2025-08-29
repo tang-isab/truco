@@ -12,7 +12,7 @@ export interface Player {
 }
 
 export interface GameState {
-  phase: 'waiting' | 'envido' | 'truco';
+  phase: 'waiting' | 'envido' | 'truco' | 'envido-reveal';
   players: Player[];
   spectators: { id: string; name: string }[];
   currentTrick: Card[];
@@ -21,6 +21,8 @@ export interface GameState {
   mono: number;
   teamScores: [number, number];
   tricksWon: [number, number];
+  currentRound: number;
+  envidoValues?: { playerId: string; value: number; revealed: boolean }[];
   currentBet: {
     type: 'envido' | 'truco' | null;
     amount: number;
@@ -30,6 +32,7 @@ export interface GameState {
   gameStarted: boolean;
   gameEnded: boolean;
   winner: number | null;
+  canFold: boolean;
 }
 
 export interface ChatMessage {

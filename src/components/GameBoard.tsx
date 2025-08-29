@@ -1,9 +1,9 @@
 import React from 'react';
 import { GameState, Player } from '../types/game';
 import { Card } from './Card';
-import { PlayerHand } from './PlayerHand';
 import { GameControls } from './GameControls';
 import { Chat } from './Chat';
+import { EnvidoReveal } from './EnvidoReveal';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -13,6 +13,8 @@ interface GameBoardProps {
   onAcceptBet: () => void;
   onDenyBet: () => void;
   onSendMessage: (message: string) => void;
+  onRevealEnvido: (value: number) => void;
+  onFold: () => void;
 }
 
 export function GameBoard({ 
@@ -22,9 +24,12 @@ export function GameBoard({
   onBet, 
   onAcceptBet, 
   onDenyBet,
-  onSendMessage 
+  onSendMessage,
+  onRevealEnvido,
+  onFold
 }: GameBoardProps) {
   const isCurrentPlayerTurn = currentPlayer && gameState.currentPlayer === gameState.players.findIndex(p => p.id === currentPlayer.id);
+  const currentPlayerIndex = currentPlayer ? gameState.players.findIndex(p => p.id === currentPlayer.id) : -1;
 
   return (
     <div className="min-h-screen p-4">
@@ -34,6 +39,9 @@ export function GameBoard({
           <h1 className="text-4xl font-bold text-white mb-2">Truco</h1>
           <div className="text-xl text-white/90 mb-4">
             Phase: <span className="font-semibold capitalize">{gameState.phase}</span>
+            {gameState.currentRound > 0 && (
+              <span className="ml-4">Round: {gameState.currentRound}</span>
+            )}
           </div>
           <div className="flex justify-center gap-8 text-white">
             <div className="text-center">
@@ -51,6 +59,15 @@ export function GameBoard({
           {/* Game Area */}
           <div className="lg:col-span-3">
             <div className="game-area p-6">
+              {/* Envido Reveal Phase */}
+              {gameState.phase === 'envido-reveal' && (
+                <EnvidoReveal
+                  gameState={gameState}
+                  currentPlayer={currentPlayer}
+                  onRevealEnvido={onRevealEnvido}
+                />
+              )}
+
               {/* Center Cards */}
               <div className="text-center mb-8">
                 <h3 className="text-lg font-semibold mb-4">Cards Played</h3>
@@ -93,13 +110,17 @@ export function GameBoard({
                 ))}
               </div>
 
-              {/* Player Hand */}
+              {/* Current Player Info */}
               {currentPlayer && (
-                <PlayerHand 
-                  player={currentPlayer}
-                  isCurrentTurn={isCurrentPlayerTurn}
-                  onPlayCard={onPlayCard}
-                />
+                <div className="text-center mb-6">
+                  <div className="bg-white/90 rounded-lg p-4 inline-block">
+                    <h3 className="font-semibold mb-2">You are: {currentPlayer.name}</h3>
+                    <p className="text-sm text-gray-600">Team {currentPlayer.team + 1}</p>
+                    {isCurrentPlayerTurn && gameState.phase === 'truco' && (
+                      <p className="text-green-600 font-semibold mt-2">Your turn to play a card!</p>
+                    )}
+                  </div>
+                </div>
               )}
 
               {/* Game Controls */}
@@ -109,6 +130,7 @@ export function GameBoard({
                 onBet={onBet}
                 onAcceptBet={onAcceptBet}
                 onDenyBet={onDenyBet}
+                onFold={onFold}
               />
             </div>
           </div>

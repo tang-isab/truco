@@ -5,13 +5,16 @@ interface WaitingRoomProps {
   gameState: GameState;
   onJoinAsPlayer: (name: string) => void;
   onJoinAsSpectator: (name: string) => void;
-  canStartGame: boolean;
-  onStartGame: () => void;
+  messages: ChatMessage[];
+  onSendMessage: (message: string) => void;
 }
 
-export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, canStartGame, onStartGame }: WaitingRoomProps) {
+export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, messages, onSendMessage }: WaitingRoomProps) {
   const [name, setName] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
+  
+  // Import Chat component
+  const Chat = React.lazy(() => import('./Chat').then(module => ({ default: module.Chat })));
 
   const handleJoinAsPlayer = () => {
     if (name.trim()) {
@@ -29,11 +32,11 @@ export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, canS
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="game-area max-w-2xl w-full p-8 text-center">
+      <div className="max-w-6xl w-full">
         <h1 className="text-4xl font-bold mb-8">Truco Game</h1>
         
         {!hasJoined ? (
-          <div className="space-y-6">
+          <div className="game-area max-w-2xl mx-auto p-8 text-center space-y-6">
             <div>
               <input
                 type="text"
@@ -69,8 +72,10 @@ export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, canS
             )}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-3 game-area p-8 text-center space-y-6">
             <h2 className="text-2xl font-semibold">Waiting for Game to Start...</h2>
+            <p className="text-gray-600">Host will start the game when ready</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -78,10 +83,13 @@ export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, canS
                 <div className="space-y-2">
                   {gameState.players.map((player, index) => (
                     <div key={player.id} className={`p-3 rounded-lg ${player.team === 0 ? 'bg-blue-100' : 'bg-red-100'}`}>
-                      {player.name} (Team {player.team + 1})
+                      <div className="font-semibold">{player.name}</div>
+                      <div className="text-sm">Team {player.team + 1}</div>
+                      {index === 0 && <div className="text-xs text-gray-500">Will be Dealer</div>}
+                      {!player.isConnected && <div className="text-xs text-red-500">Disconnected</div>}
                     </div>
                   ))}
-                  {Array.from({ length: 4 - gameState.players.length }).map((_, index) => (
+                  {gameState.players.length < 4 && Array.from({ length: 4 - gameState.players.length }).map((_, index) => (
                     <div key={index} className="p-3 rounded-lg bg-gray-100 text-gray-500">
                       Waiting for player...
                     </div>
@@ -104,15 +112,17 @@ export function WaitingRoom({ gameState, onJoinAsPlayer, onJoinAsSpectator, canS
               </div>
             </div>
             
-            {canStartGame && gameState.players.length >= 2 && (
-              <button className="btn btn-success text-lg px-8 py-3" onClick={onStartGame}>
-                Start Game
-              </button>
-            )}
-            
             {gameState.players.length < 2 && (
               <p className="text-gray-600">Need at least 2 players to start</p>
             )}
+            </div>
+            
+            {/* Chat in waiting room */}
+            <div className="lg:col-span-1">
+              <React.Suspense fallback={<div>Loading chat...</div>}>
+                <Chat messages={messages} onSendMessage={onSendMessage} />
+              </React.Suspense>
+            </div>
           </div>
         )}
       </div>
